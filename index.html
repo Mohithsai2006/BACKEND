@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emotion Analysis Folder Upload</title>
+</head>
+<body>
+  <h1>Upload a Folder of Images for Emotion Analysis</h1>
+  <form id="uploadForm" enctype="multipart/form-data">
+    <input type="file" name="photos" accept="image/*" multiple webkitdirectory required>
+    <button type="submit">Upload and Analyze Folder</button>
+  </form>
+
+  <h2>Analysis Results:</h2>
+  <div id="result"></div>
+
+  <script>
+    document.getElementById('uploadForm').onsubmit = async function (event) {
+      event.preventDefault();
+      const formData = new FormData(this);
+
+      try {
+        const response = await fetch('http://localhost:5001/upload-folder', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) throw new Error("Upload failed");
+
+        const data = await response.json();
+
+        document.getElementById('result').innerHTML = data.map(fileResult => `
+          <div>
+            <p><strong>Filename:</strong> ${fileResult.filename}</p>
+            <p><strong>Dominant Emotion:</strong> ${fileResult.dominant_emotion.emotion} (${fileResult.dominant_emotion.score.toFixed(2)})</p>
+            <h3>All Emotions:</h3>
+            <ul>${Object.entries(fileResult.emotions).map(([emotion, score]) => `<li>${emotion}: ${score.toFixed(2)}</li>`).join('')}</ul>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error("Error:", error);
+        document.getElementById('result').textContent = "Error during folder upload and analysis.";
+      }
+    };
+  </script>
+</body>
+</html>
